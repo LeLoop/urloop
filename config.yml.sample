@@ -1,0 +1,16 @@
+# File: config.yml
+api:
+  user: foo
+  pass: foo
+  url: foo
+debug: true
+shared: no
+exclude_tags:
+  - notag
+  - osef
+  - nopost
+scraplist: 'crap.txt'
+synonyms: 'synonyms.txt'
+logs:
+  dir: 'samples'
+  format: '#leloop.%Y%m%d.log'
