@@ -1,0 +1,48 @@
+GIT
+  remote: git://github.com/bborn/postrank-uri.git
+  revision: 37ce2eca2be8de9fd29268349a7c9ce933875eca
+  specs:
+    postrank-uri (1.0.15)
+      addressable (>= 2.2.3)
+      domainatrix
+      nokogiri
+
+GIT
+  remote: git://github.com/rhaamo/www-delicious.git
+  revision: 9d776107a4048aa43540279321cae60deff50ce4
+  specs:
+    www-delicious (0.4.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.3.2)
+    domain_name (0.5.4)
+      unf (~> 0.0.3)
+    domainatrix (0.0.10)
+      addressable
+    mechanize (2.5.1)
+      domain_name (~> 0.5, >= 0.5.1)
+      mime-types (~> 1.17, >= 1.17.2)
+      net-http-digest_auth (~> 1.1, >= 1.1.1)
+      net-http-persistent (~> 2.5, >= 2.5.2)
+      nokogiri (~> 1.4)
+      ntlm-http (~> 0.1, >= 0.1.1)
+      webrobots (~> 0.0, >= 0.0.9)
+    mime-types (1.19)
+    net-http-digest_auth (1.2.1)
+    net-http-persistent (2.7)
+    nokogiri (1.5.5)
+    ntlm-http (0.1.1)
+    unf (0.0.5)
+      unf_ext
+    unf_ext (0.0.5)
+    webrobots (0.0.13)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  mechanize
+  postrank-uri!
+  www-delicious!

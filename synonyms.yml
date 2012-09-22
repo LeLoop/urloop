@@ -1,0 +1,12 @@
+---
+  debug:
+    - debugging
+  hooks:
+    - hook
+  tips:
+    - tip
+    - hint
+  security:
+    - secu
+    - sec
+    - infosec

@@ -1,14 +1,15 @@
 # File: config.yml
 api:
-  user: foo
-  pass: foo
-  url: foo
+  user: "happyuser"
+  pass: "somepassword"
+  url: "https://links.example.com/"
 debug: true
 shared: no
 exclude_tags:
   - notag
   - osef
   - nopost
+exclude_no_tags: true
 scraplist: 'crap.txt'
 synonyms: 'synonyms.txt'
 logs:
