@@ -10,8 +10,6 @@ exclude_tags:
   - osef
   - nopost
 exclude_no_tags: true
-scraplist: 'crap.txt'
-synonyms: 'synonyms.txt'
 logs:
   dir: 'samples'
   format: '#leloop.%Y%m%d.log'
