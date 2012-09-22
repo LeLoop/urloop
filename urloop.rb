@@ -80,7 +80,11 @@ def getUrlTitle(url)
   agent.user_agent_alias = 'Mac Safari'
   doc = agent.get(url)
   if doc
-    return doc.title || ""
+    begin
+      return doc.title
+    rescue
+      return ""
+    end
   end
   return ""
 end
