@@ -160,6 +160,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
 
   l = File.open(file, 'r')
   l.each do |line|
+    line.encode!('UTF-8', 'UTF-8', :invalid => :replace)
     local_urls = []
     # 1/ extract urls
     urls = URI.extract(line)
