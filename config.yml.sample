@@ -11,6 +11,7 @@ exclude_tags:
   - nopost
 exclude_users:
   - lapool
+add_user_to_tags: false
 exclude_no_tags: true
 logs:
   dir: 'samples'

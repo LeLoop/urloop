@@ -239,6 +239,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
     next if (tags.empty? and @config['exclude_no_tags'])
     tags = cleanTags(tags)
     next if urlHasTagExcluded(tags)
+    tags << user if @config["add_user_to_tags"]
     # 4/ fill @urls with the new urls
     urls_w_title = []
     local_urls.each do |url|
