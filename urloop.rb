@@ -256,6 +256,8 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
         title.strip!
       end
 
+      title = "no title" if title.empty?
+
       valid = true if !title.nil?
 
       begin
