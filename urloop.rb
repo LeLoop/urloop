@@ -252,6 +252,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
       if !title.nil?
         title.gsub!("\n", "")
         title.gsub!("\r", "")
+        title.strip!
       end
 
       valid = true if !title.nil?
