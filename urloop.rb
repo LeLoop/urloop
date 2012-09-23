@@ -78,14 +78,52 @@ end
 def getUrlTitle(url)
   agent = Mechanize.new
   agent.user_agent_alias = 'Mac Safari'
-  doc = agent.get(url)
+  begin
+    doc = agent.get(url)
+  rescue Net::HTTPNotFound => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  rescue Mechanize::ResponseCodeError => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  rescue OpenSSL::SSL::SSLError => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return ""
+  rescue SocketError => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil # sorry...
+  rescue Mechanize::UnsupportedSchemeError => e
+    ["http://", "https://", "ftp://", "ftps://", "mailto://", "nntp://", "xmpp://"].each do |format|
+      if url.include? format
+        return "" # valid format
+      end
+    end
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil # nope
+  rescue Errno::ETIMEDOUT => e
+  rescue Net::HTTP::Persistent::Error => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  rescue Errno::EHOSTUNREACH => e
+  rescue Errno::ENETUNREACH => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  rescue Mechanize::RedirectLimitReachedError => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  rescue URI::InvalidURIError => e
+    dputs "getUrlTitle error: #{e.message} for #{url}"
+    return nil
+  end
   if doc
     begin
-      return doc.title
-    rescue
+      return (doc.title.nil? ? "" : doc.title)
+    rescue => e
+      dputs "getUrlTitle 'doc' error: #{e.message} for #{url}"
       return ""
     end
   end
+  dputs "getUrlTitle, no doc, no title, wtf ? #{url}"
   return ""
 end
 
@@ -101,6 +139,16 @@ def urlInCrapList(url)
     end
   end
   return false
+end
+
+def userExcluded(user)
+  @config['exclude_users'].include? user
+end
+
+def cleanTags(tags)
+  t = []
+  tags.map {|tt| t << tt.strip.gsub("#", "")}
+  t
 end
 
 def urlHasTagExcluded(tags)
@@ -174,28 +222,29 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
       end
     end
     next if local_urls.empty?
-    dputs "URLs found : #{local_urls.join(", ")}"
-    # 2/ extract user
-    user = line.match(/  <(.*)>/)
-    user = user[1] if user
+    # 2/ extract user and timestamp
+    things = line.match(/^(\d{4}-\d{2}-\d{2}\w\d{2}:\d{2}:\d{2})\s+<(.*)>\s/i)
+    user = things[2] if things
+    timestamp = things[1] if things
+    next if userExcluded(user) # excluded users, like lapool bot
     # 3/ extract tags
-    tags = line.match(/#(.*),?#/)
+    tags = line.match(/^.*\#(.*),?\#$/)
     if tags
       tags = tags[1]
       tags = tags.split(",")
     else
       tags = []
     end
+    next if (tags.empty? and @config['exclude_no_tags'])
+    tags = cleanTags(tags)
     # 4/ fill @urls with the new urls
-    dputs "User: #{user}, tags : #{tags.join(', ')}"
     urls_w_title = []
     local_urls.each do |url|
       valid = false
-      title = nil
-      begin
-        title = getUrlTitle(url)  # also used to verify if the url is valid (no 404)
-      rescue Mechanize::ResponseCodeError
-        dputs "URL ignored #{url} return code is a 404 or other than 200"
+      title = getUrlTitle(url)  # also used to verify if the url is valid (no 404)
+      # title is nil (fail), "" (no title, image), or a non empty string
+      if title.nil?
+        dputs "URL ignored #{url} return code is a 404 or other than 200 title '#{title}'"
       end
       if !title.nil?
         title.gsub!("\n", "")
@@ -203,14 +252,26 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
       end
 
       valid = true if (!urlInCrapList(url) && !urlHasTagExcluded(tags) && title)
-      valid = false if (tags.empty? and @config['exclude_no_tags'])
 
-      url = PostRank::URI.clean(url)
+      begin
+        url = PostRank::URI.clean(url)
+      rescue Addressable::URI::InvalidURIError
+	valid = false
+      end
+
+      #dputs "#{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}'"
+
       urls_w_title << {:url => url, :title => title} if valid
+      if valid
+        dputs "URL found : '#{url}'"
+        dputs "User: '#{user}', tags : #{tags.join(', ')}"
+      end
     end
     tags = fixTagsWithSynonyms(tags)
     @urls << {:log => log, :user => user, :tags => tags, :urls => urls_w_title} if !urls_w_title.empty?
   end
+    
+  #addLogToVarAndSave(last_file_no_urls) if last_file_no_urls
 
   dputs ""
   l.close

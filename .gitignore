@@ -18,3 +18,4 @@ _yardoc
 doc/
 config.yml
 samples/
+logs_parsed.yml

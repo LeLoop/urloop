@@ -9,6 +9,8 @@ exclude_tags:
   - notag
   - osef
   - nopost
+exclude_users:
+  - lapool
 exclude_no_tags: true
 logs:
   dir: 'samples'
