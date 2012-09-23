@@ -257,10 +257,12 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
         title.strip!
       end
 
+      title = "no title" if title == ""
+
       begin
         url = PostRank::URI.clean(url)
       rescue Addressable::URI::InvalidURIError
-	valid = false
+        valid = false
       end
 
       dputs "#{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}' tags: '#{tags}'"
@@ -275,7 +277,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
     @urls << {:log => log, :user => user, :tags => tags, :urls => urls_w_title} if !urls_w_title.empty?
     @no_urls = false
   end
-    
+
   addLogToVarAndSave(log) if @no_urls
   dputs "Log with no urls :(" if @no_urls
 
