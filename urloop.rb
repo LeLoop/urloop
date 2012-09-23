@@ -209,6 +209,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
   file = File.join(@config['logs']['dir'], log)
   next if !File.readable?(file) or !File.exists?(file)
   dputs "Parsing #{file}"
+  @no_urls = true
 
   l = File.open(file, 'r')
   l.each do |line|
@@ -237,9 +238,11 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
     end
     next if (tags.empty? and @config['exclude_no_tags'])
     tags = cleanTags(tags)
+    next if urlHasTagExcluded(tags)
     # 4/ fill @urls with the new urls
     urls_w_title = []
     local_urls.each do |url|
+      next if urlInCrapList(url)
       valid = false
       title = getUrlTitle(url)  # also used to verify if the url is valid (no 404)
       # title is nil (fail), "" (no title, image), or a non empty string
@@ -251,7 +254,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
         title.gsub!("\r", "")
       end
 
-      valid = true if (!urlInCrapList(url) && !urlHasTagExcluded(tags) && title)
+      valid = true if !title.nil?
 
       begin
         url = PostRank::URI.clean(url)
@@ -259,7 +262,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
 	valid = false
       end
 
-      #dputs "#{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}'"
+      dputs "#{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}' tags: '#{tags}'"
 
       urls_w_title << {:url => url, :title => title} if valid
       if valid
@@ -269,9 +272,11 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
     end
     tags = fixTagsWithSynonyms(tags)
     @urls << {:log => log, :user => user, :tags => tags, :urls => urls_w_title} if !urls_w_title.empty?
+    @no_urls = false
   end
     
-  #addLogToVarAndSave(last_file_no_urls) if last_file_no_urls
+  addLogToVarAndSave(log) if @no_urls
+  dputs "Log with no urls :(" if @no_urls
 
   dputs ""
   l.close
