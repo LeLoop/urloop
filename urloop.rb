@@ -249,7 +249,6 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
       # title is nil (fail), "" (no title, image), or a non empty string
       if title.nil?
         dputs "URL ignored #{url} return code is a 404 or other than 200 title '#{title}'"
-        title = "no title"
       end
       if !title.nil?
         title.gsub!("\n", "")
@@ -257,7 +256,8 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
         title.strip!
       end
 
-      title = "no title" if title == ""
+      title = "no title" if (title == "" or title.nil?)
+      valid = true if !title.nil?
 
       begin
         url = PostRank::URI.clean(url)
