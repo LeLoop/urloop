@@ -191,8 +191,17 @@ end
 # scan directory, and exclude logs which filename is in the already_parsed logs files
 # also exclude the log-of-the-day from being parsed
 @logs_to_scan = []
+@logslist = []
+
+if ARGV.empty?
+  @logslist = Dir.new(@config['logs']['dir']).find_all
+else
+  ARGV.map { |z| @logslist << z }
+  ARGV.clear
+end
+
 @log_of_the_day = Time.now.strftime @config['logs']['format']
-Dir.new(@config['logs']['dir']).find_all.each do |log|
+@logslist.each do |log|
   if @already_parsed_logs.include?(log) or @log_of_the_day == log or ['..', '.'].include? log
     next
   else
@@ -203,13 +212,15 @@ end
 dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
 
 # parse logs and grab urls
-@urls = []
+@logs = {}
 
 @logs_to_scan.each do |log|
   file = File.join(@config['logs']['dir'], log)
   next if !File.readable?(file) or !File.exists?(file)
   dputs "Parsing #{file}"
   @no_urls = true
+
+  @log_urls=[]
 
   l = File.open(file, 'r')
   l.each do |line|
@@ -241,7 +252,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
     next if urlHasTagExcluded(tags)
     tags << user if @config["add_user_to_tags"]
     # 4/ fill @urls with the new urls
-    urls_w_title = []
+    urls_w_title = nil
     local_urls.each do |url|
       next if urlInCrapList(url)
       valid = false
@@ -265,18 +276,19 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
         valid = false
       end
 
-      dputs "#{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}' tags: '#{tags}'"
+      dputs "+++> #{valid ? 'valid' : 'invalid'} url '#{url}' w/ title '#{title}' tags: '#{tags}'"
 
-      urls_w_title << {:url => url, :title => title} if valid
+      urls_w_title = {:url => url, :title => title, :user => user, :tags => fixTagsWithSynonyms(tags)} if valid
       if valid
-        dputs "URL found : '#{url}'"
-        dputs "User: '#{user}', tags : #{tags.join(', ')}"
+        dputs "-> URL found : '#{url}'"
+        dputs "-> User: '#{user}', tags : #{tags.join(', ')}"
       end
     end
-    tags = fixTagsWithSynonyms(tags)
-    @urls << {:log => log, :user => user, :tags => tags, :urls => urls_w_title} if !urls_w_title.empty?
+    @log_urls << urls_w_title if urls_w_title
     @no_urls = false
   end
+
+  @logs[log] = @log_urls if (@log_urls and !@log_urls.empty?)
 
   addLogToVarAndSave(log) if @no_urls
   dputs "Log with no urls :(" if @no_urls
@@ -286,7 +298,7 @@ dputs "Logs to scan: #{@logs_to_scan.join(', ')}"
 end
 
 # start working with the user
-pp @urls
+pp @logs
 
 @old_log = nil
 
@@ -297,23 +309,31 @@ pp @urls
 #   url: foobar
 #   title: coin
 
-@urls.each do |urls|
-  if @old_log != urls[:log]
+#
+# {"coin.log" => [{},{}]}
+#
+
+@count_posted = 0
+
+@logs.each_pair do |log,urls|
+  if @old_log != log
     # new log to pase, save the old one in the parsed files
     addLogToVarAndSave(@old_log)
 
-    urls[:urls].each do |url|
+    urls.each do |url|
+      # url{ :user, url, tags, title }
       # Show the url, with tag, and user to the user
-      puts ">>> #{urls[:user]} posted #{url[:url]} with tags #{urls[:tags].join(", ")}"
+      puts ">>> #{url[:user]} posted #{url[:url]} with tags #{url[:tags].join(", ")}"
       puts ">> Title: #{url[:title]}"
       # Ask if we upload it
       ret = askUserYesOrNot("Post this URL to the remote API ? (if no you will need to upload manually) [y/n]: ")
       if ret
         # Adding post to scuttle, replacing if already exists
         post = d.posts_get(:url => url[:url])
-        newpost = d.posts_add(:url => url[:url], :title => url[:title], :tags => urls[:tags], :replace => true)
+        newpost = d.posts_add(:url => url[:url], :title => url[:title], :tags => url[:tags], :replace => true)
         if newpost
           puts "=> Post saved !"
+          @count_posted+=1
         else
           puts "=> Unsaved, error somewhere :("
         end
@@ -323,7 +343,8 @@ pp @urls
     end
 
   end
-  @old_log = urls[:log]
+  @old_log = log
 end
 addLogToVarAndSave(@old_log) # the last one
 
+puts "You have posted: #{@count_posted} links. OMNOMNOMNOM"
