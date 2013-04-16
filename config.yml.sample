@@ -6,9 +6,12 @@ api:
 debug: true
 shared: no
 exclude_tags:
-  - notag
-  - osef
+  - nolink
+  - nolog
   - nopost
+  - notag
+  - nsfw
+  - osef
 exclude_users:
   - lapool
 add_user_to_tags: false
