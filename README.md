@@ -3,7 +3,7 @@ URLoop
 
 URLoop, Le Loop's URL manipulat0r.
 
-This is a command line tool that parse IRC logs to push urls with `#tags#` on a
+This is a command line tool that parses IRC logs to push urls with `#tags#` on a
 Semantic Scuttle instance.
 
 Configuration
